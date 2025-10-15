@@ -34,3 +34,50 @@ Notes
 - The implementation assumes the first column in `adult.data` is the age field (an integer),
   consistent with typical formatting of the UCI Adult dataset.
 - The program skips malformed lines.
+
+
+Implemented algorithm (step-by-step)
+
+1) Data parsing and filtering
+   - The program reads the input file line-by-line. Each non-empty line is expected to be a comma-separated record where the first field is the integer `age` (this matches the UCI Adult dataset layout).
+   - For each line the code trims whitespace, parses the first comma-separated token as an integer age, and ignores malformed lines.
+   - The program collects all ages and a subset containing only records with `age > 25`.
+
+2) Deterministic query computation
+   - Let m be the number of records with age > 25.
+   - Compute the true (non-private) average age on that subset:
+     avg = (1/m) * sum_{i=1..m} age_i
+   - Also compute the observed minimum and maximum age in the subset (min_age and max_age). These values are used to bound the possible contribution of any single record.
+
+3) Sensitivity choice
+   - For the average query over a fixed-size subset of m records, a natural bound on how much the average can change when one individual's value changes is (range)/m, where `range` is an upper bound on possible age values in the subset.
+   - The program uses `range = max_age - min_age` observed in the subset, therefore sensitivity = (max_age - min_age) / m.
+   - This is a data-driven (empirical) sensitivity. If you need a data-independent (global) sensitivity, replace `max_age - min_age` with a global bound such as 100 (or another agreed range) to obtain sensitivity = global_range / m.
+
+4) Laplace mechanism (adding noise)
+   - To achieve epsilon-differential privacy for the numeric average, the Laplace mechanism adds noise drawn from Laplace(0, b), where the scale parameter b = sensitivity / epsilon.
+   - The Laplace probability density function with scale b is p(x) = (1/(2b)) exp(-|x|/b).
+   - The implementation samples Laplace noise via inverse CDF using a uniform random draw u ~ Uniform(0,1) and the transformation:
+       noise = b * log(2u)          if u < 0.5
+       noise = -b * log(2(1-u))     otherwise
+   - The noisy output is noisy_avg = avg + noise.
+
+5) Repeated trials
+   - The program supports generating `trials` independent noisy releases (default 1000) by re-sampling Laplace noise each time and writing each noisy average to the output file on its own line.
+
+Design notes and edge cases
+   - Subset size m = 0: the program detects and exits with an error if there are no records with age > 25.
+   - Malformed lines are skipped; if the first token cannot be parsed as an integer, the line is ignored.
+   - Randomness: the program uses `std::random_device` to seed a 64-bit Mersenne Twister (`std::mt19937_64`). This yields independent Laplace draws per trial.
+   - Floating point precision: outputs are printed with 10 digits of precision.
+
+Privacy remark
+   - The program reports noisy averages computed using the Laplace mechanism with the chosen sensitivity and epsilon. The current sensitivity is empirical (depends on dataset). For strict differential privacy guarantees that hold independently of the dataset, use a known global bound on ages when computing sensitivity.
+
+Mathematical contract (inputs/outputs)
+   - Input: CSV-like dataset where the first column is integer age; parameters epsilon > 0 and trials (positive integer).
+   - Output: `trials` lines containing independent noisy estimates of the true average age over records with age > 25.
+   - Error modes: non-existent input file, empty subset (m=0), or inability to open the output file.
+
+References
+   - Dwork, Cynthia, et al. "Calibrating noise to sensitivity in private data analysis." Theory of cryptography conference. 2006.
