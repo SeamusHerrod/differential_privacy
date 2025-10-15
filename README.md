@@ -78,6 +78,3 @@ Mathematical contract (inputs/outputs)
    - Input: CSV-like dataset where the first column is integer age; parameters epsilon > 0 and trials (positive integer).
    - Output: `trials` lines containing independent noisy estimates of the true average age over records with age > 25.
    - Error modes: non-existent input file, empty subset (m=0), or inability to open the output file.
-
-References
-   - Dwork, Cynthia, et al. "Calibrating noise to sensitivity in private data analysis." Theory of cryptography conference. 2006.
