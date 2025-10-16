@@ -78,3 +78,47 @@ Mathematical contract (inputs/outputs)
    - Input: CSV-like dataset where the first column is integer age; parameters epsilon > 0 and trials (positive integer).
    - Output: `trials` lines containing independent noisy estimates of the true average age over records with age > 25.
    - Error modes: non-existent input file, empty subset (m=0), or inability to open the output file.
+
+
+============================================================
+Binning into 5 bins over range [42.7300, 42.8400]
+
+D: N=1000 min=42.73 max=42.82
+D1: N=1000 min=42.73 max=42.83
+D2: N=1000 min=42.74 max=42.84
+D3: N=1000 min=42.74 max=42.84
+Dp_combined: N=3000
+
+D vs D1: max ratio = 1.1196  -> satisfies eps=0.5? True
+D vs D2: max ratio = 1.1548  -> satisfies eps=0.5? True
+D vs D3: max ratio = 1.1333  -> satisfies eps=0.5? True
+D vs Dp_combined: max ratio = 1.0295 -> satisfies eps=0.5? True
+
+Top bins for D vs D1 (ratio, bin_idx, [lo,hi], p_D, p_D1):
+  1.1195652173913042    2  [42.7740,42.7960]  pD=0.7210 p_D1=0.6440
+  1.0         4  [42.8180,42.8400]  pD=0.0030 p_D1=0.0030
+  0.9444444444444445    0  [42.7300,42.7520]  pD=0.0170 p_D1=0.0180
+  0.9090909090909092    3  [42.7960,42.8180]  pD=0.0800 p_D1=0.0880
+  0.7246963562753036    1  [42.7520,42.7740]  pD=0.1790 p_D1=0.2470
+
+Top bins for D vs D2 (ratio, bin_idx, [lo,hi], p_D, p_D2):
+  1.1548387096774193    1  [42.7520,42.7740]  pD=0.1790 p_D2=0.1550
+  1.0126582278481013    3  [42.7960,42.8180]  pD=0.0800 p_D2=0.0790
+  0.9743243243243243    2  [42.7740,42.7960]  pD=0.7210 p_D2=0.7400
+  0.8500000000000001    0  [42.7300,42.7520]  pD=0.0170 p_D2=0.0200
+  0.5         4  [42.8180,42.8400]  pD=0.0030 p_D2=0.0060
+
+Top bins for D vs D3 (ratio, bin_idx, [lo,hi], p_D, p_D3):
+  1.1333333333333335    0  [42.7300,42.7520]  pD=0.0170 p_D3=0.0150
+  1.0666666666666667    3  [42.7960,42.8180]  pD=0.0800 p_D3=0.0750
+  1.00557880055788    2  [42.7740,42.7960]  pD=0.7210 p_D3=0.7170
+  0.988950276243094    1  [42.7520,42.7740]  pD=0.1790 p_D3=0.1810
+  0.25        4  [42.8180,42.8400]  pD=0.0030 p_D3=0.0120
+
+Top bins for D vs Dp_combined (ratio, bin_idx, [lo,hi], p_D, p_Dp_combined):
+  1.0295097572584482    2  [42.7740,42.7960]  pD=0.7210 p_Dp_combined=0.7003
+  0.9917355371900827    3  [42.7960,42.8180]  pD=0.0800 p_Dp_combined=0.0807
+  0.9622641509433962    0  [42.7300,42.7520]  pD=0.0170 p_Dp_combined=0.0177
+  0.9210977701543739    1  [42.7520,42.7740]  pD=0.1790 p_Dp_combined=0.1943
+  0.42857142857142855    4  [42.8180,42.8400]  pD=0.0030 p_Dp_combined=0.0070
+

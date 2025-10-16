@@ -4,6 +4,9 @@
 #include <unistd.h>
 using namespace std;
 
+// global override for sensitivity range (0 means use observed range)
+double g_global_range = 0.0;
+
 // Trim helpers
 static inline std::string &ltrim(std::string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
@@ -105,10 +108,11 @@ void write_filtered_files(const string &orig_path, const string &out_dir) {
     }
     f1.close();
 
-    // remove all age 26
+    // remove a single record with age 26 (first occurrence)
     ofstream f2(out2);
+    bool removed_one_age26 = false;
     for (auto &r : records) {
-        if (r.age == 26) continue;
+        if (!removed_one_age26 && r.age == 26) { removed_one_age26 = true; continue; }
         f2 << r.line << '\n';
     }
     f2.close();
@@ -125,7 +129,39 @@ void write_filtered_files(const string &orig_path, const string &out_dir) {
 }
 
 // Run analysis (compute average over age>25, add Laplace noise, write trials)
-bool run_analysis_on_file(const string &input_path, const string &output_path, double epsilon, int trials, std::mt19937_64 &rng) {
+// Gather simple stats for an input file: m (count age>25), avg, min_age, max_age
+bool get_stats(const string &input_path, int &out_m, double &out_avg, int &out_min_age, int &out_max_age) {
+    ifstream infile(input_path);
+    if (!infile.is_open()) return false;
+    vector<int> ages_subset;
+    string line;
+    while (std::getline(infile, line)) {
+        string t = line;
+        trim(t);
+        if (t.empty()) continue;
+        stringstream ss(t);
+        string token;
+        if (!getline(ss, token, ',')) continue;
+        trim(token);
+        try {
+            int age = stoi(token);
+            if (age > 25) ages_subset.push_back(age);
+        } catch (...) { continue; }
+    }
+    infile.close();
+    if (ages_subset.empty()) return false;
+    int m = (int)ages_subset.size();
+    double sum = 0.0;
+    int min_age = INT_MAX, max_age = INT_MIN;
+    for (int a : ages_subset) { sum += a; min_age = min(min_age, a); max_age = max(max_age, a); }
+    out_m = m; out_avg = sum / m; out_min_age = min_age; out_max_age = max_age;
+    return true;
+}
+
+// Run analysis (compute average over age>25, add Laplace noise, write trials)
+// If sensitivity_override > 0, use that fixed sensitivity (dataset-independent); otherwise
+// fall back to per-file computed sensitivity (or global-range per-file if set).
+bool run_analysis_on_file(const string &input_path, const string &output_path, double epsilon, int trials, std::mt19937_64 &rng, double sensitivity_override = -1.0) {
     ifstream infile(input_path);
     if (!infile.is_open()) {
         cerr << "Failed to open input file: " << input_path << "\n";
@@ -164,7 +200,14 @@ bool run_analysis_on_file(const string &input_path, const string &output_path, d
     }
     double avg = sum / m;
 
-    double sensitivity = double(max_age - min_age) / double(max(1, m));
+    double sensitivity;
+    if (sensitivity_override > 0.0) {
+        sensitivity = sensitivity_override;
+    } else if (g_global_range > 0.0) {
+        sensitivity = double(g_global_range) / double(max(1, m));
+    } else {
+        sensitivity = double(max_age - min_age) / double(max(1, m));
+    }
     double scale = sensitivity / epsilon;
 
     ofstream outfile(output_path);
@@ -190,19 +233,27 @@ int main(int argc, char **argv) {
     double epsilon = 0.5;
     int trials = 1000;
     string data_dir = "data";
+    // global-range override; if >0, used for sensitivity = global_range / m
+    double global_range = 0.0;
+
+    // (will set global variable g_global_range from parsed CLI after parsing)
 
     // CLI parsing (supports --epsilon, --trials, --input, --data-dir)
     for (int i = 1; i < argc; ++i) {
         string arg = argv[i];
         if ((arg == "-i" || arg == "--input") && i + 1 < argc) { input_path = argv[++i]; }
         else if ((arg == "-e" || arg == "--epsilon") && i + 1 < argc) { epsilon = stod(argv[++i]); }
-        else if ((arg == "-t" || arg == "--trials") && i + 1 < argc) { trials = stoi(argv[++i]); }
-        else if ((arg == "--data-dir") && i + 1 < argc) { data_dir = argv[++i]; }
+    else if ((arg == "-t" || arg == "--trials") && i + 1 < argc) { trials = stoi(argv[++i]); }
+    else if ((arg == "--data-dir") && i + 1 < argc) { data_dir = argv[++i]; }
+    else if ((arg == "--global-range") && i + 1 < argc) { global_range = stod(argv[++i]); }
         else if (arg == "-h" || arg == "--help") {
-            cout << "Usage: " << argv[0] << " [--input PATH] [--data-dir DIR] [--epsilon E] [--trials N]\n";
+            cout << "Usage: " << argv[0] << " [--input PATH] [--data-dir DIR] [--epsilon E] [--trials N] [--global-range R]\n";
             return 0;
         }
     }
+
+    // set the global variable used by run_analysis_on_file
+    g_global_range = global_range;
 
     // Ensure output directory exists
     { struct stat st; if (stat(data_dir.c_str(), &st) != 0) {
@@ -224,10 +275,31 @@ int main(int argc, char **argv) {
     string out_age26 = data_dir + "/noisy_results_eps" + to_string(epsilon) + "_minus_age26.txt";
     string out_youngest = data_dir + "/noisy_results_eps" + to_string(epsilon) + "_minus_youngest.txt";
 
-    run_analysis_on_file(input_path, out_orig, epsilon, trials, rng);
-    run_analysis_on_file(data_dir + "/adult_minus_oldest.data", out_oldest, epsilon, trials, rng);
-    run_analysis_on_file(data_dir + "/adult_minus_age26.data", out_age26, epsilon, trials, rng);
-    run_analysis_on_file(data_dir + "/adult_minus_youngest.data", out_youngest, epsilon, trials, rng);
+    // If user provided --global-range, compute a single dataset-independent sensitivity
+    // using min_m = min over the four datasets of m (count of age>25). This ensures
+    // the same sensitivity (global_range / min_m) is used for all outputs.
+    double fixed_sensitivity = -1.0;
+    if (g_global_range > 0.0) {
+        int m_orig=0, m_o=0, m_a=0, m_y=0;
+        double avg; int min_age, max_age;
+        bool ok=true;
+        ok &= get_stats(input_path, m_orig, avg, min_age, max_age);
+        ok &= get_stats(data_dir + "/adult_minus_oldest.data", m_o, avg, min_age, max_age);
+        ok &= get_stats(data_dir + "/adult_minus_age26.data", m_a, avg, min_age, max_age);
+        ok &= get_stats(data_dir + "/adult_minus_youngest.data", m_y, avg, min_age, max_age);
+        if (!ok) {
+            cerr << "Warning: failed to compute stats for one or more datasets; falling back to per-file sensitivity." << endl;
+        } else {
+            int min_m = max(1, min(min(m_orig, m_o), min(m_a, m_y)));
+            fixed_sensitivity = double(g_global_range) / double(min_m);
+            cout << "Using fixed sensitivity = global_range / min_m = " << fixed_sensitivity << " (global_range=" << g_global_range << ", min_m=" << min_m << ")\n";
+        }
+    }
+
+    run_analysis_on_file(input_path, out_orig, epsilon, trials, rng, fixed_sensitivity);
+    run_analysis_on_file(data_dir + "/adult_minus_oldest.data", out_oldest, epsilon, trials, rng, fixed_sensitivity);
+    run_analysis_on_file(data_dir + "/adult_minus_age26.data", out_age26, epsilon, trials, rng, fixed_sensitivity);
+    run_analysis_on_file(data_dir + "/adult_minus_youngest.data", out_youngest, epsilon, trials, rng, fixed_sensitivity);
 
     return 0;
 }
