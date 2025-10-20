@@ -20,9 +20,10 @@ run-eps0.5: build
 run-eps1.0: build
 	./$(BINARY) --data-dir data --epsilon 1.0 --trials 1000 --global-range 100
 
-# Run the validation script
+# Run the validation script for both eps=0.5 and eps=1.0
 validate:
-	python3 scripts/validate_privacy.py
+	python3 scripts/validate_privacy.py --eps 0.5
+	python3 scripts/validate_privacy.py --eps 1.0
 
 # Produce plots (requires venv python or system matplotlib)
 plots:
