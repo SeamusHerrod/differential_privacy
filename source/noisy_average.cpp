@@ -219,6 +219,7 @@ bool run_analysis_on_file(const string &input_path, const string &output_path, d
     for (int i = 0; i < trials; ++i) {
         double noise = sample_laplace(scale, rng);
         double noisy = avg + noise;
+        cout << "sensitivity: " << sensitivity << " epsilon: " << epsilon << " scale: " << scale << " noise: " << noise << " -> noisy avg: " << noisy << "\n";
         outfile << std::setprecision(10) << noisy << "\n";
     }
     outfile.close();

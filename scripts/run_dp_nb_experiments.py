@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""
-Run DP GaussianNB experiments across multiple epsilons and record accuracies.
 
-This script calls `scripts/dp_naive_bayes_iris.py` repeatedly and parses its
-stdout to extract the reported accuracy. It writes `outputs/dp_nb_results.csv`
-with columns: epsilon,trial,seed,accuracy and prints a small summary.
-"""
 import argparse
 import csv
 import os
@@ -26,7 +20,41 @@ def run_trial(python_exec, script_path, epsilon, seed):
     if not m:
         raise RuntimeError(f"Couldn't parse accuracy from output:\n{out}")
     acc = float(m.group(1))
-    return acc, out
+    # Parse per-instance true/pred lines like: "1: Iris-setosa -> Iris-virginica"
+    pairs = []
+    for line in out.splitlines():
+        pm = re.match(r'^(\d+):\s*(\S+)\s*->\s*(\S+)', line)
+        if pm:
+            idx = int(pm.group(1))
+            true = pm.group(2)
+            pred = pm.group(3)
+            pairs.append((true, pred))
+
+    # Compute macro-precision and macro-recall from pairs if available
+    macro_prec = None
+    macro_rec = None
+    if pairs:
+        labels = sorted({t for t, p in pairs} | {p for t, p in pairs})
+        tp = {l: 0 for l in labels}
+        fp = {l: 0 for l in labels}
+        fn = {l: 0 for l in labels}
+        for t, p in pairs:
+            if t == p:
+                tp[t] += 1
+            else:
+                fp[p] += 1
+                fn[t] += 1
+        precs = []
+        recs = []
+        for l in labels:
+            prec = tp[l] / (tp[l] + fp[l]) if (tp[l] + fp[l]) > 0 else 0.0
+            rec = tp[l] / (tp[l] + fn[l]) if (tp[l] + fn[l]) > 0 else 0.0
+            precs.append(prec)
+            recs.append(rec)
+        macro_prec = sum(precs) / len(precs)
+        macro_rec = sum(recs) / len(recs)
+
+    return acc, macro_prec, macro_rec, out
 
 
 def main():
@@ -48,13 +76,15 @@ def main():
         print(f"Running epsilon={eps} ({args.trials} trials)")
         for t in range(args.trials):
             seed = args.seed_base + t
-            acc, out = run_trial(python_exec, script_path, eps, seed)
-            print(f"  trial {t+1}/{args.trials}: acc={acc:.4f}")
-            rows.append({'epsilon': eps, 'trial': t, 'seed': seed, 'accuracy': acc})
+            acc, prec, rec, out = run_trial(python_exec, script_path, eps, seed)
+            prec_str = f"{prec:.4f}" if prec is not None else 'NA'
+            rec_str = f"{rec:.4f}" if rec is not None else 'NA'
+            print(f"  trial {t+1}/{args.trials}: acc={acc:.4f} prec={prec_str} rec={rec_str}")
+            rows.append({'epsilon': eps, 'trial': t, 'seed': seed, 'accuracy': acc, 'precision': prec if prec is not None else '', 'recall': rec if rec is not None else ''})
 
     # write CSV
     with open(args.out_csv, 'w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=['epsilon', 'trial', 'seed', 'accuracy'])
+        writer = csv.DictWriter(f, fieldnames=['epsilon', 'trial', 'seed', 'accuracy', 'precision', 'recall'])
         writer.writeheader()
         for r in rows:
             writer.writerow(r)
@@ -64,11 +94,30 @@ def main():
     eps_map = {}
     for r in rows:
         eps_map.setdefault(r['epsilon'], []).append(r['accuracy'])
+    # compute summaries for accuracy and recall
     for eps in sorted(eps_map.keys()):
         vals = eps_map[eps]
         mean = statistics.mean(vals)
         stdev = statistics.pstdev(vals)
-        print(f"epsilon={eps}: mean_acc={mean:.4f}, std={stdev:.4f} (n={len(vals)})")
+        # collect recalls if present
+        recs = [r['recall'] for r in rows if r['epsilon'] == eps and r['recall'] != '']
+        precs = [r['precision'] for r in rows if r['epsilon'] == eps and r['precision'] != '']
+        if recs:
+            mean_rec = statistics.mean(recs)
+            std_rec = statistics.pstdev(recs)
+        else:
+            mean_rec = None
+            std_rec = None
+        if precs:
+            mean_prec = statistics.mean(precs)
+            std_prec = statistics.pstdev(precs)
+        else:
+            mean_prec = None
+            std_prec = None
+        if mean_rec is not None:
+            print(f"epsilon={eps}: mean_acc={mean:.4f}, std={stdev:.4f} (n={len(vals)})  mean_rec={mean_rec:.4f}, std_rec={std_rec:.4f}")
+        else:
+            print(f"epsilon={eps}: mean_acc={mean:.4f}, std={stdev:.4f} (n={len(vals)})")
 
     print(f"Wrote results to {args.out_csv}")
 

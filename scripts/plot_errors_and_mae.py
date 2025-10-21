@@ -126,7 +126,7 @@ out_mae = os.path.join(OUT_DIR, 'mae_vs_epsilon.png')
 plt.savefig(out_mae)
 plt.close(fig2)
 
-# Small CSV summary
+# CSV summary
 csv_out = os.path.join(OUT_DIR, 'mae_summary.csv')
 with open(csv_out, 'w') as f:
     f.write('dataset,eps,mae\n')

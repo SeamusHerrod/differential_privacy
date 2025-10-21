@@ -1,0 +1,75 @@
+Running epsilon=0.5 (10 trials)
+  trial 1/10: acc=0.6000 prec=0.5873 rec=0.6000
+  trial 2/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 3/10: acc=0.5000 prec=0.3484 rec=0.5000
+  trial 4/10: acc=0.6000 prec=0.4512 rec=0.6000
+  trial 5/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 6/10: acc=0.8000 prec=0.8506 rec=0.8000
+  trial 7/10: acc=0.4000 prec=0.4524 rec=0.4000
+  trial 8/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 9/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 10/10: acc=0.9333 prec=0.9444 rec=0.9333
+Running epsilon=1 (10 trials)
+  trial 1/10: acc=0.7333 prec=0.7361 rec=0.7333
+  trial 2/10: acc=0.4667 prec=0.4615 rec=0.4667
+  trial 3/10: acc=0.9000 prec=0.9024 rec=0.9000
+  trial 4/10: acc=0.6667 prec=0.4785 rec=0.6667
+  trial 5/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 6/10: acc=0.9000 prec=0.9024 rec=0.9000
+  trial 7/10: acc=0.3667 prec=0.4483 rec=0.3667
+  trial 8/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 9/10: acc=0.4000 prec=0.7857 rec=0.4000
+  trial 10/10: acc=0.9333 prec=0.9444 rec=0.9333
+Running epsilon=2 (10 trials)
+  trial 1/10: acc=0.8333 prec=0.8350 rec=0.8333
+  trial 2/10: acc=0.6667 prec=0.5000 rec=0.6667
+  trial 3/10: acc=0.9333 prec=0.9333 rec=0.9333
+  trial 4/10: acc=0.6667 prec=0.4630 rec=0.6667
+  trial 5/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 6/10: acc=0.8667 prec=0.8667 rec=0.8667
+  trial 7/10: acc=0.4667 prec=0.6250 rec=0.4667
+  trial 8/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 9/10: acc=0.4000 prec=0.7857 rec=0.4000
+  trial 10/10: acc=0.9000 prec=0.9024 rec=0.9000
+Running epsilon=4 (10 trials)
+  trial 1/10: acc=0.8667 prec=0.8667 rec=0.8667
+  trial 2/10: acc=0.8667 prec=0.9048 rec=0.8667
+  trial 3/10: acc=0.9667 prec=0.9697 rec=0.9667
+  trial 4/10: acc=0.4667 prec=0.4615 rec=0.4667
+  trial 5/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 6/10: acc=0.8667 prec=0.8667 rec=0.8667
+  trial 7/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 8/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 9/10: acc=0.5000 prec=0.8000 rec=0.5000
+  trial 10/10: acc=0.9000 prec=0.9024 rec=0.9000
+Running epsilon=8 (10 trials)
+  trial 1/10: acc=0.8667 prec=0.8667 rec=0.8667
+  trial 2/10: acc=0.8000 prec=0.8750 rec=0.8000
+  trial 3/10: acc=0.9667 prec=0.9697 rec=0.9667
+  trial 4/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 5/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 6/10: acc=0.8000 prec=0.8056 rec=0.8000
+  trial 7/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 8/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 9/10: acc=0.5000 prec=0.8000 rec=0.5000
+  trial 10/10: acc=0.9667 prec=0.9697 rec=0.9667
+Running epsilon=16 (10 trials)
+  trial 1/10: acc=0.8000 prec=0.8254 rec=0.8000
+  trial 2/10: acc=0.7333 prec=0.8324 rec=0.7333
+  trial 3/10: acc=0.9333 prec=0.9333 rec=0.9333
+  trial 4/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 5/10: acc=0.6667 prec=0.4785 rec=0.6667
+  trial 6/10: acc=0.9333 prec=0.9333 rec=0.9333
+  trial 7/10: acc=0.9000 prec=0.9024 rec=0.9000
+  trial 8/10: acc=0.3333 prec=0.1111 rec=0.3333
+  trial 9/10: acc=0.5000 prec=0.8000 rec=0.5000
+  trial 10/10: acc=0.4333 prec=0.4568 rec=0.4333
+
+Summary:
+epsilon=0.5: mean_acc=0.5167, std=0.2040 (n=10)  mean_rec=0.5167, std_rec=0.2040
+epsilon=1: mean_acc=0.6033, std=0.2383 (n=10)  mean_rec=0.6033, std_rec=0.2383
+epsilon=2: mean_acc=0.6400, std=0.2279 (n=10)  mean_rec=0.6400, std_rec=0.2279
+epsilon=4: mean_acc=0.6433, std=0.2569 (n=10)  mean_rec=0.6433, std_rec=0.2569
+epsilon=8: mean_acc=0.6233, std=0.2663 (n=10)  mean_rec=0.6233, std_rec=0.2663
+epsilon=16: mean_acc=0.6566, std=0.2285 (n=10)  mean_rec=0.6567, std_rec=0.2285
+Wrote results to outputs/dp_nb_results.csv

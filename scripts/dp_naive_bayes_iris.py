@@ -1,50 +1,5 @@
 #!/usr/bin/env python3
-"""
-Differentially-private Gaussian Naive Bayes trainer for the Iris dataset.
 
-Overview:
- - We implement a Gaussian Naive Bayes classifier where the per-class
-   sufficient statistics (counts, feature sums, and feature sum-of-squares)
-   are privatized using the Laplace mechanism.
-
-Privacy accounting and composition:
- - We split the global privacy budget epsilon into three parts:
-     epsilon_count + epsilon_sum + epsilon_sumsq = epsilon
-   These are used to privatize class counts, per-feature sums, and per-feature
-   sum-of-squares respectively.
- - The queries (counts, sums, sumsq) are computed for each class. Counts
-   across classes are disjoint (each training record contributes to exactly
-   one class count), so the counts benefit from parallel composition over
-   classes and can be released with epsilon_count each (no extra sequential
-   cost across classes). The same holds for sums and sumsq when computed only
-   on disjoint subsets (per-class). However, since we release counts, sums,
-   and sumsq for the same class, we must account sequential composition per
-   class: for each class the budget used is epsilon_count + epsilon_sum +
-   epsilon_sumsq. In total the algorithm satisfies epsilon-differential
-   privacy by construction (we partition epsilon accordingly).
-
-Sensitivity and clamping:
- - We assume each feature value lies in a known range [min_val, max_val].
-   For Iris features, we'll use the observed min/max from the training set and
-   clamp values to this range before computing sums/sumsq. The L1 sensitivity
-   of a class count when a single record changes is 1. The sensitivity of a
-   clamped feature sum per class is (max_val - min_val). The sensitivity of
-   the sum-of-squares is max(max_val^2, min_val^2) - min(min_val^2, max_val^2)
-   (equivalently (max_val^2 - min_val^2)). We divide these sensitivities by
-   1 because each record contributes once to its class' sums.
-
-Implementation notes:
- - We add Laplace noise using inverse CDF sampling from Uniform(0,1).
- - We compute DP means and variances from noisy counts/sums/sumsq with a small
-   correction to variances to keep them non-negative. We then use the Gaussian
-   log-likelihoods for prediction.
- - CLI: --epsilon, --eps-count, --eps-sum, --eps-sumsq (optional overrides),
-   --data-path, --seed.
-
-References:
- - Dwork & Roth, "The Algorithmic Foundations of Differential Privacy" (Laplace mechanism)
-
-"""
 import argparse
 import csv
 import math

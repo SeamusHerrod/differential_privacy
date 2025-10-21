@@ -3,7 +3,8 @@ CFLAGS = -std=c++17 -O2
 BINARY = noisy_average
 SRC = source/noisy_average.cpp
 
-.PHONY: all build run clean pipeline run-eps0.5 run-eps1.0 validate plots
+.PHONY: all build run clean pipeline run-eps0.5 run-eps1.0 validate plots run-naive run-naive-venv
+.PHONY: all build run clean pipeline run-eps0.5 run-eps1.0 validate plots run-naive run-naive-venv run-dp-experiments
 
 all: build
 
@@ -29,6 +30,12 @@ validate:
 plots:
 	/mnt/c/Users/seamu/Desktop/differential_privacy/.venv/bin/python scripts/plot_errors_and_mae.py
 
+run-naive-bayes:
+	/mnt/c/Users/seamu/Desktop/differential_privacy/.venv/bin/python scripts/naive_bayes_iris.py
+
+# Run the DP Naive Bayes experiments runner (sweeps epsilons/trials)
+run-dp-experiments:
+	python3 scripts/run_dp_nb_experiments.py
 # Full pipeline: build, generate both eps, validate, plots
 pipeline: build run-eps0.5 run-eps1.0 validate plots
 

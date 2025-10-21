@@ -23,7 +23,7 @@ def run_dp(python_exec: str, script_path: str, epsilon: float, seed: int):
     if proc.returncode != 0:
         raise RuntimeError(f"Command failed: {' '.join(cmd)}\nStderr:\n{proc.stderr}")
     out = proc.stdout
-    # parse lines like: "1: Iris-setosa -> Iris-virginica"
+    # parse lines 
     preds = {}
     for line in out.splitlines():
         m = re.match(r'^(\d+):\s*(\S+)\s*->\s*(\S+)', line)
@@ -32,7 +32,6 @@ def run_dp(python_exec: str, script_path: str, epsilon: float, seed: int):
             true = m.group(2)
             pred = m.group(3)
             preds[idx] = (true, pred)
-    # ensure we have all test indices
     missing = [i for i in TEST_INDICES if i not in preds]
     if missing:
         raise RuntimeError(f"Missing predictions for indices: {missing}\nOutput:\n{out}")
